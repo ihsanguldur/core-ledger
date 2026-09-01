@@ -1,13 +1,15 @@
-package com.ihsanguldur.coreledger.domain;
+package com.ihsanguldur.coreledger.domain.valueobject;
 
 import com.ihsanguldur.coreledger.domain.exception.CurrencyMismatchException;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.util.Currency;
 
-public class MoneyTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class MoneyTest {
 
     private static final Currency USD = Currency.getInstance("USD");
     private static final Currency JPY = Currency.getInstance("JPY");

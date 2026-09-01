@@ -1,7 +1,10 @@
-package com.ihsanguldur.coreledger.domain;
+package com.ihsanguldur.coreledger.domain.valueobject;
 
 import com.ihsanguldur.coreledger.domain.exception.CurrencyMismatchException;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
