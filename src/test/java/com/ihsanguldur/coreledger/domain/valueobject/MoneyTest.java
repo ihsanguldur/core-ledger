@@ -2,10 +2,12 @@ package com.ihsanguldur.coreledger.domain.valueobject;
 
 import com.ihsanguldur.coreledger.domain.exception.CurrencyMismatchException;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.util.Currency;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MoneyTest {
 
