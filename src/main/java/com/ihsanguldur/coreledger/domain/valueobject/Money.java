@@ -1,4 +1,4 @@
-package com.ihsanguldur.coreledger.domain;
+package com.ihsanguldur.coreledger.domain.valueobject;
 
 import com.ihsanguldur.coreledger.domain.exception.CurrencyMismatchException;
 import lombok.*;
