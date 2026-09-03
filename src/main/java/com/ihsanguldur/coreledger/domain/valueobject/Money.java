@@ -35,7 +35,7 @@ public final class Money {
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(
                     "amount " + amount + " has more precision than " + currency.getCurrencyCode()
-                    + " allows (" + currency.getDefaultFractionDigits() + " decimal places)", e);
+                            + " allows (" + currency.getDefaultFractionDigits() + " decimal places)", e);
         }
 
         return new Money(scaled, currency);

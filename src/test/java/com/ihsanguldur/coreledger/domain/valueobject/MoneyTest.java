@@ -35,15 +35,15 @@ class MoneyTest {
 
     @Test
     void addingDifferentCurrenciesThrows() {
-        Money usd =  Money.of(new BigDecimal("10.00"), USD);
-        Money jpy =  Money.of(new BigDecimal("10"), JPY);
+        Money usd = Money.of(new BigDecimal("10.00"), USD);
+        Money jpy = Money.of(new BigDecimal("10"), JPY);
         assertThrows(CurrencyMismatchException.class, () -> usd.add(jpy));
     }
 
     @Test
     void equalAmountsAndCurrenciesAreEqual() {
-        Money a =  Money.of(new BigDecimal("50.00"), USD);
-        Money b =  Money.of(new BigDecimal("50.00"), USD);
+        Money a = Money.of(new BigDecimal("50.00"), USD);
+        Money b = Money.of(new BigDecimal("50.00"), USD);
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
     }

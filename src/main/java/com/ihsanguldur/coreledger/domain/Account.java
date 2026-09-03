@@ -16,20 +16,12 @@ public final class Account {
 
     @Getter
     private final AccountId accountId;
-
+    private final Set<TransactionId> appliedTransactions = new HashSet<>();
+    private final List<DomainEvent> events = new ArrayList<>();
     @Getter
     private Money balance;
-
     @Getter
     private long version;
-
-    private final Set<TransactionId> appliedTransactions = new HashSet<>();
-
-    private final List<DomainEvent> events = new ArrayList<>();
-
-    public List<DomainEvent> getEvents() {
-        return List.copyOf(events);
-    }
 
     private Account(AccountId accountId, Currency currency) {
         this.accountId = Objects.requireNonNull(accountId, "accountId cannot be null");
@@ -40,6 +32,17 @@ public final class Account {
 
     public static Account open(AccountId accountId, Currency currency) {
         return new Account(accountId, currency);
+    }
+
+    public static Account reconstitute(AccountId accountId, Money balance, long version) {
+        Account account = new Account(accountId, balance.getCurrency());
+        account.balance = balance;
+        account.version = version;
+        return account;
+    }
+
+    public List<DomainEvent> getEvents() {
+        return List.copyOf(events);
     }
 
     public void debit(Money amount, TransactionId transactionId) {
