@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-init-schema
+      author: ihsanguldur
+      changes:
+        - sqlFile:
+            path: changes/001-init-schema.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+      rollback:
+        - sql:
+            sql: DROP TABLE outbox;
+        - sql:
+            sql: DROP TABLE idempotency_keys;
+        - sql:
+            sql: DROP TABLE ledger_entries;
+        - sql:
+            sql: DROP TABLE accounts;
+  - changeSet:
+      id: 2-currency-columns-varchar
+      author: ihsanguldur
+      changes:
+        - modifyDataType:
+            tableName: accounts
+            columnName: currency
+            newDataType: varchar(3)
+        - modifyDataType:
+            tableName: ledger_entries
+            columnName: currency
+            newDataType: varchar(3)
+      rollback:
+        - modifyDataType:
+            tableName: accounts
+            columnName: currency
+            newDataType: char(3)
+        - modifyDataType:
+            tableName: ledger_entries
+            columnName: currency
+            newDataType: char(3)

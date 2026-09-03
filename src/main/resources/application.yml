@@ -1,3 +1,12 @@
 spring:
   application:
     name: core-ledger
+  datasource:
+    url: jdbc:postgresql://localhost:5432/core_ledger
+    username: postgres
+    password: 123456
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jpa:
+    hibernate:
+      ddl-auto: validate
