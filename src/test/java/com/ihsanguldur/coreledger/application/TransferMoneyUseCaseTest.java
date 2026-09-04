@@ -5,6 +5,7 @@ import com.ihsanguldur.coreledger.application.port.IdempotencyKeyRepository;
 import com.ihsanguldur.coreledger.domain.Account;
 import com.ihsanguldur.coreledger.domain.exception.AccountNotFoundException;
 import com.ihsanguldur.coreledger.domain.exception.InsufficientFundsException;
+import com.ihsanguldur.coreledger.domain.exception.InvalidAmountException;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.IdempotencyKey;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
@@ -78,6 +79,26 @@ class TransferMoneyUseCaseTest {
         useCase.transfer(AccountId.generate(), AccountId.generate(), Money.of(new BigDecimal("10.00"), USD), key);
 
         verifyNoInteractions(accountRepository);
+    }
+
+    @Test
+    void zeroAmountTransferPropagatesAndDoesNotSave() {
+        AccountId sourceId = AccountId.generate();
+        AccountId destinationId = AccountId.generate();
+        Account source = Account.open(sourceId, USD);
+        source.credit(Money.of(new BigDecimal("100.00"), USD), TransactionId.generate());
+        Account destination = Account.open(destinationId, USD);
+
+        when(idempotencyKeyRepository.exists(any())).thenReturn(false);
+        when(accountRepository.findById(sourceId)).thenReturn(Optional.of(source));
+        when(accountRepository.findById(destinationId)).thenReturn(Optional.of(destination));
+
+        assertThatThrownBy(() -> useCase.transfer(
+                sourceId, destinationId, Money.zero(USD), IdempotencyKey.of(UUID.randomUUID())))
+                .isInstanceOf(InvalidAmountException.class);
+
+        verify(accountRepository, never()).save(any());
+        verify(idempotencyKeyRepository, never()).save(any());
     }
 
     @Test

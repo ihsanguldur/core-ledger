@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 
 @DataJpaTest
@@ -42,6 +45,9 @@ class AccountRepositoryAdapterIT {
 
     @Autowired
     private LedgerEntryJpaRepository ledgerEntryJpaRepository;
+
+    @Autowired
+    private TestEntityManager entityManager;
 
     private AccountRepositoryAdapter accountRepository;
 
@@ -85,5 +91,44 @@ class AccountRepositoryAdapterIT {
     @Test
     void findByIdReturnsEmptyWhenAccountDoesNotExist() {
         assertThat(accountRepository.findById(AccountId.generate())).isEmpty();
+    }
+
+    @Test
+    void concurrentSaveOnSameAccountThrowsOptimisticLockException() {
+        AccountId accountId = AccountId.generate();
+        Account account = Account.open(accountId, USD);
+        accountRepository.save(account);
+        entityManager.flush();
+        entityManager.clear();
+
+        Account firstRead = accountRepository.findById(accountId).orElseThrow();
+        entityManager.clear();
+        Account secondRead = accountRepository.findById(accountId).orElseThrow();
+
+        firstRead.credit(Money.of(new BigDecimal("10.00"), USD), TransactionId.generate());
+        accountRepository.save(firstRead);
+        entityManager.flush();
+        entityManager.clear();
+
+        secondRead.credit(Money.of(new BigDecimal("20.00"), USD), TransactionId.generate());
+
+        assertThatThrownBy(() -> {
+            accountRepository.save(secondRead);
+            entityManager.flush();
+        }).isInstanceOf(ObjectOptimisticLockingFailureException.class);
+    }
+
+    @Test
+    void savingSameAccountInstanceTwiceDoesNotDuplicateLedgerEntries() {
+        AccountId accountId = AccountId.generate();
+        Account account = Account.open(accountId, USD);
+        account.credit(Money.of(new BigDecimal("50.00"), USD), TransactionId.generate());
+
+        accountRepository.save(account);
+        accountRepository.save(account);
+
+        List<LedgerEntryJpaEntity> entries = ledgerEntryJpaRepository.findAll();
+
+        assertThat(entries).hasSize(1);
     }
 }

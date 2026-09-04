@@ -9,6 +9,7 @@ import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.IdempotencyKey;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,6 +25,7 @@ public class TransferMoneyUseCase {
         this.idempotencyKeyRepository = idempotencyKeyRepository;
     }
 
+    @Transactional
     public void transfer(AccountId sourceId, AccountId destinationId, Money amount, IdempotencyKey idempotencyKey) {
         if (idempotencyKeyRepository.exists(idempotencyKey)) {
             return;

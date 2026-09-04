@@ -4,6 +4,7 @@ import com.ihsanguldur.coreledger.domain.event.DomainEvent;
 import com.ihsanguldur.coreledger.domain.event.MoneyCredited;
 import com.ihsanguldur.coreledger.domain.event.MoneyDebited;
 import com.ihsanguldur.coreledger.domain.exception.InsufficientFundsException;
+import com.ihsanguldur.coreledger.domain.exception.InvalidAmountException;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
@@ -45,9 +46,17 @@ public final class Account {
         return List.copyOf(events);
     }
 
+    public void clearEvents() {
+        events.clear();
+    }
+
     public void debit(Money amount, TransactionId transactionId) {
         Objects.requireNonNull(amount, "amount cannot be null");
         Objects.requireNonNull(transactionId, "transactionId cannot be null");
+
+        if (amount.isZero()) {
+            throw new InvalidAmountException(amount);
+        }
 
         if (appliedTransactions.contains(transactionId)) {
             return;
@@ -65,6 +74,10 @@ public final class Account {
     public void credit(Money amount, TransactionId transactionId) {
         Objects.requireNonNull(amount, "amount cannot be null");
         Objects.requireNonNull(transactionId, "transactionId cannot be null");
+
+        if (amount.isZero()) {
+            throw new InvalidAmountException(amount);
+        }
 
         if (appliedTransactions.contains(transactionId)) {
             return;
