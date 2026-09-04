@@ -2,6 +2,7 @@ package com.ihsanguldur.coreledger.domain.service;
 
 import com.ihsanguldur.coreledger.domain.Account;
 import com.ihsanguldur.coreledger.domain.exception.InsufficientFundsException;
+import com.ihsanguldur.coreledger.domain.exception.InvalidAmountException;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
@@ -57,5 +58,18 @@ class TransferServiceTest {
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(source.getBalance()).isEqualTo(balanceBeforeTransfer);
+    }
+
+    @Test
+    void zeroAmountTransferIsRejected() {
+        Account source = Account.open(AccountId.generate(), USD);
+        source.credit(Money.of(new BigDecimal("100.00"), USD), TransactionId.generate());
+        Account destination = Account.open(AccountId.generate(), USD);
+
+        assertThatThrownBy(() -> TransferService.transfer(
+                source, destination, Money.zero(USD), TransactionId.generate()))
+                .isInstanceOf(InvalidAmountException.class);
+
+        assertThat(destination.getBalance()).isEqualTo(Money.zero(USD));
     }
 }

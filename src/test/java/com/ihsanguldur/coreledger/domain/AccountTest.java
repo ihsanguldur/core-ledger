@@ -3,6 +3,7 @@ package com.ihsanguldur.coreledger.domain;
 import com.ihsanguldur.coreledger.domain.event.MoneyCredited;
 import com.ihsanguldur.coreledger.domain.event.MoneyDebited;
 import com.ihsanguldur.coreledger.domain.exception.InsufficientFundsException;
+import com.ihsanguldur.coreledger.domain.exception.InvalidAmountException;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
@@ -117,5 +118,31 @@ class AccountTest {
         account.credit(amount, transactionId);
 
         assertThat(account.getEvents()).hasSize(1);
+    }
+
+    @Test
+    void debitRejectsZeroAmount() {
+        Account account = Account.open(AccountId.generate(), USD);
+
+        assertThatThrownBy(() -> account.debit(Money.zero(USD), TransactionId.generate()))
+                .isInstanceOf(InvalidAmountException.class);
+    }
+
+    @Test
+    void creditRejectsZeroAmount() {
+        Account account = Account.open(AccountId.generate(), USD);
+
+        assertThatThrownBy(() -> account.credit(Money.zero(USD), TransactionId.generate()))
+                .isInstanceOf(InvalidAmountException.class);
+    }
+
+    @Test
+    void clearEventsRemovesAllEvents() {
+        Account account = Account.open(AccountId.generate(), USD);
+        account.credit(Money.of(new BigDecimal("20.00"), USD), TransactionId.generate());
+
+        account.clearEvents();
+
+        assertThat(account.getEvents()).isEmpty();
     }
 }

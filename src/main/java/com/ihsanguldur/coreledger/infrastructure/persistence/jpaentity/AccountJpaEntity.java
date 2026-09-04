@@ -1,9 +1,6 @@
 package com.ihsanguldur.coreledger.infrastructure.persistence.jpaentity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,5 +28,6 @@ public class AccountJpaEntity {
     private Long version;
 
     @CreationTimestamp
+    @Column(updatable = false)
     private Instant createdAt;
 }

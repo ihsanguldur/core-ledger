@@ -62,6 +62,10 @@ public final class Money {
         return new Money(result, this.currency);
     }
 
+    public boolean isZero() {
+        return this.amount.signum() == 0;
+    }
+
     public boolean isGreaterThanOrEqualTo(Money other) {
         requireSameCurrency(other);
 

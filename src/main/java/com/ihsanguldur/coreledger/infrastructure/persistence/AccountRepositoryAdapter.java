@@ -40,6 +40,7 @@ public class AccountRepositoryAdapter implements AccountRepository {
             LedgerEntry entry = toLedgerEntry(event);
             ledgerEntryJpaRepository.save(LedgerEntryMapper.toJpaEntity(entry));
         }
+        account.clearEvents();
     }
 
     private LedgerEntry toLedgerEntry(DomainEvent event) {
