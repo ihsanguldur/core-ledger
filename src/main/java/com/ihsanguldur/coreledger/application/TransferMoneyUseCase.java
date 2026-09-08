@@ -10,6 +10,9 @@ import com.ihsanguldur.coreledger.domain.valueobject.IdempotencyKey;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
 import jakarta.transaction.Transactional;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +28,11 @@ public class TransferMoneyUseCase {
         this.idempotencyKeyRepository = idempotencyKeyRepository;
     }
 
+    @Retryable(
+            retryFor = ObjectOptimisticLockingFailureException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 50, multiplier = 2)
+    )
     @Transactional
     public void transfer(AccountId sourceId, AccountId destinationId, Money amount, IdempotencyKey idempotencyKey) {
         if (idempotencyKeyRepository.exists(idempotencyKey)) {

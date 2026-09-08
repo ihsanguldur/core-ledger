@@ -1,14 +1,17 @@
 package com.ihsanguldur.coreledger.api.rest;
 
+import com.ihsanguldur.coreledger.api.dto.request.DepositRequest;
 import com.ihsanguldur.coreledger.api.dto.request.OpenAccountRequest;
 import com.ihsanguldur.coreledger.api.dto.response.BalanceResponse;
 import com.ihsanguldur.coreledger.api.dto.response.LedgerEntryResponse;
 import com.ihsanguldur.coreledger.api.dto.response.OpenAccountResponse;
+import com.ihsanguldur.coreledger.application.DepositMoneyUseCase;
 import com.ihsanguldur.coreledger.application.GetAccountBalanceUseCase;
 import com.ihsanguldur.coreledger.application.GetAccountHistoryUseCase;
 import com.ihsanguldur.coreledger.application.OpenAccountUseCase;
 import com.ihsanguldur.coreledger.domain.Account;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
+import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,7 @@ public class AccountController {
     private final OpenAccountUseCase openAccountUseCase;
     private final GetAccountBalanceUseCase getAccountBalanceUseCase;
     private final GetAccountHistoryUseCase getAccountHistoryUseCase;
+    private final DepositMoneyUseCase depositMoneyUseCase;
 
     @PostMapping
     public ResponseEntity<OpenAccountResponse> openAccount(@RequestBody OpenAccountRequest request) {
@@ -65,6 +69,21 @@ public class AccountController {
                         entry.getCreatedAt()
                 ))
                 .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/deposit")
+    public ResponseEntity<BalanceResponse> deposit(@PathVariable UUID id, @RequestBody DepositRequest request) {
+        Account account = depositMoneyUseCase.deposit(
+                AccountId.of(id), Money.of(request.amount(), Currency.getInstance(request.currency()))
+        );
+
+        BalanceResponse response = new BalanceResponse(
+                account.getAccountId().value(),
+                account.getBalance().getAmount(),
+                account.getBalance().getCurrency().getCurrencyCode()
+        );
 
         return ResponseEntity.ok(response);
     }

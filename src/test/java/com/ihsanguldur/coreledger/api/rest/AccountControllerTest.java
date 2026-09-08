@@ -1,5 +1,6 @@
 package com.ihsanguldur.coreledger.api.rest;
 
+import com.ihsanguldur.coreledger.application.DepositMoneyUseCase;
 import com.ihsanguldur.coreledger.application.GetAccountBalanceUseCase;
 import com.ihsanguldur.coreledger.application.GetAccountHistoryUseCase;
 import com.ihsanguldur.coreledger.application.OpenAccountUseCase;
@@ -48,6 +49,9 @@ class AccountControllerTest {
 
     @MockBean
     private GetAccountHistoryUseCase getAccountHistoryUseCase;
+
+    @MockBean
+    private DepositMoneyUseCase depositMoneyUseCase;
 
     @Test
     void openAccountReturns201WithAccountDetails() throws Exception {
@@ -116,6 +120,35 @@ class AccountControllerTest {
                 .thenThrow(new AccountNotFoundException(accountId));
 
         mockMvc.perform(get("/api/accounts/{id}/history", accountId.value()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void depositReturns200WithUpdatedBalance() throws Exception {
+        AccountId accountId = AccountId.generate();
+        Account account = Account.open(accountId, USD);
+        account.credit(Money.of(new BigDecimal("100.00"), USD), TransactionId.generate());
+        when(depositMoneyUseCase.deposit(eq(accountId), eq(Money.of(new BigDecimal("100.00"), USD))))
+                .thenReturn(account);
+
+        mockMvc.perform(post("/api/accounts/{id}/deposit", accountId.value())
+                        .contentType("application/json")
+                        .content("{\"amount\":100.00,\"currency\":\"USD\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId.value().toString()))
+                .andExpect(jsonPath("$.balance").value(100.0))
+                .andExpect(jsonPath("$.currency").value("USD"));
+    }
+
+    @Test
+    void depositReturns404WhenAccountNotFound() throws Exception {
+        AccountId accountId = AccountId.generate();
+        when(depositMoneyUseCase.deposit(eq(accountId), eq(Money.of(new BigDecimal("100.00"), USD))))
+                .thenThrow(new AccountNotFoundException(accountId));
+
+        mockMvc.perform(post("/api/accounts/{id}/deposit", accountId.value())
+                        .contentType("application/json")
+                        .content("{\"amount\":100.00,\"currency\":\"USD\"}"))
                 .andExpect(status().isNotFound());
     }
 }
