@@ -1,5 +1,6 @@
 package com.ihsanguldur.coreledger.infrastructure.persistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ihsanguldur.coreledger.application.port.AccountRepository;
 import com.ihsanguldur.coreledger.domain.Account;
 import com.ihsanguldur.coreledger.domain.entity.LedgerEntry;
@@ -10,8 +11,10 @@ import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.EntryId;
 import com.ihsanguldur.coreledger.infrastructure.persistence.mapper.AccountMapper;
 import com.ihsanguldur.coreledger.infrastructure.persistence.mapper.LedgerEntryMapper;
+import com.ihsanguldur.coreledger.infrastructure.persistence.mapper.OutboxMapper;
 import com.ihsanguldur.coreledger.infrastructure.persistence.repository.AccountJpaRepository;
 import com.ihsanguldur.coreledger.infrastructure.persistence.repository.LedgerEntryJpaRepository;
+import com.ihsanguldur.coreledger.infrastructure.persistence.repository.OutboxJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,8 @@ public class AccountRepositoryAdapter implements AccountRepository {
 
     private final AccountJpaRepository accountJpaRepository;
     private final LedgerEntryJpaRepository ledgerEntryJpaRepository;
+    private final OutboxJpaRepository outboxJpaRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public Optional<Account> findById(AccountId accountId) {
@@ -39,6 +44,7 @@ public class AccountRepositoryAdapter implements AccountRepository {
         for (DomainEvent event : account.getEvents()) {
             LedgerEntry entry = toLedgerEntry(event);
             ledgerEntryJpaRepository.save(LedgerEntryMapper.toJpaEntity(entry));
+            outboxJpaRepository.save(OutboxMapper.toJpaEntity(event, objectMapper));
         }
         account.clearEvents();
     }
