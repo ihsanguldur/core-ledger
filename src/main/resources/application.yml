@@ -10,3 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer

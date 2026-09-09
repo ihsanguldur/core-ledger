@@ -1,13 +1,17 @@
 package com.ihsanguldur.coreledger.infrastructure.persistence;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ihsanguldur.coreledger.domain.Account;
 import com.ihsanguldur.coreledger.domain.entity.LedgerEntry;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
 import com.ihsanguldur.coreledger.infrastructure.persistence.jpaentity.LedgerEntryJpaEntity;
+import com.ihsanguldur.coreledger.infrastructure.persistence.jpaentity.OutboxJpaEntity;
 import com.ihsanguldur.coreledger.infrastructure.persistence.repository.AccountJpaRepository;
 import com.ihsanguldur.coreledger.infrastructure.persistence.repository.LedgerEntryJpaRepository;
+import com.ihsanguldur.coreledger.infrastructure.persistence.repository.OutboxJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,13 +51,20 @@ class AccountRepositoryAdapterIT {
     private LedgerEntryJpaRepository ledgerEntryJpaRepository;
 
     @Autowired
+    private OutboxJpaRepository outboxJpaRepository;
+
+    @Autowired
     private TestEntityManager entityManager;
+
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     private AccountRepositoryAdapter accountRepository;
 
     @BeforeEach
     void setUp() {
-        accountRepository = new AccountRepositoryAdapter(accountJpaRepository, ledgerEntryJpaRepository);
+        accountRepository = new AccountRepositoryAdapter(
+                accountJpaRepository, ledgerEntryJpaRepository, outboxJpaRepository, objectMapper
+        );
     }
 
     @Test
@@ -86,6 +97,30 @@ class AccountRepositoryAdapterIT {
         assertThat(entries.get(0).getAccountId()).isEqualTo(accountId.value());
         assertThat(entries.get(0).getDirection()).isEqualTo(LedgerEntry.Direction.CREDIT);
         assertThat(entries.get(0).getTransactionId()).isEqualTo(transactionId.value());
+    }
+
+    @Test
+    void saveWritesOutboxEntryForEachDomainEvent() throws Exception {
+        AccountId accountId = AccountId.generate();
+        Account account = Account.open(accountId, USD);
+        TransactionId transactionId = TransactionId.generate();
+        account.credit(Money.of(new BigDecimal("50.00"), USD), transactionId);
+
+        accountRepository.save(account);
+
+        List<OutboxJpaEntity> outboxEntries = outboxJpaRepository.findAll();
+
+        assertThat(outboxEntries).hasSize(1);
+        OutboxJpaEntity entry = outboxEntries.get(0);
+        assertThat(entry.getAggregateId()).isEqualTo(accountId.value());
+        assertThat(entry.getEventType()).isEqualTo("MoneyCredited");
+        assertThat(entry.getPublishedAt()).isNull();
+
+        JsonNode payload = objectMapper.readTree(entry.getPayload());
+        assertThat(payload.get("accountId").asText()).isEqualTo(accountId.value().toString());
+        assertThat(payload.get("amount").decimalValue()).isEqualByComparingTo("50.00");
+        assertThat(payload.get("currency").asText()).isEqualTo("USD");
+        assertThat(payload.get("transactionId").asText()).isEqualTo(transactionId.value().toString());
     }
 
     @Test
