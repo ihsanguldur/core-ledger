@@ -50,8 +50,16 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: "123456"
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EXTERNAL_BANK_GATEWAY_BASE_URL: http://external-bank-gateway:8081
     ports:
       - "8080:8080"
+    networks:
+      - default
+      - bank-network
 
 volumes:
   pgdata:
+
+networks:
+  bank-network:
+    external: true
