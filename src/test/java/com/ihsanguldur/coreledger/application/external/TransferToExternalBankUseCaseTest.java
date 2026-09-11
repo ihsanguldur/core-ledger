@@ -7,6 +7,7 @@ import com.ihsanguldur.coreledger.domain.Account;
 import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ class TransferToExternalBankUseCaseTest {
     private final AccountRepository accountRepository = mock(AccountRepository.class);
     private final ExternalBankGatewayPort externalBankGatewayPort = mock(ExternalBankGatewayPort.class);
     private final TransferToExternalBankUseCase useCase =
-            new TransferToExternalBankUseCase(accountRepository, externalBankGatewayPort);
+            new TransferToExternalBankUseCase(accountRepository, externalBankGatewayPort, new SimpleMeterRegistry());
 
     @Test
     void acceptedPaymentDebitsOnceAndDoesNotCompensate() {
