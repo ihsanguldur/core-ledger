@@ -10,6 +10,7 @@ import com.ihsanguldur.coreledger.domain.valueobject.AccountId;
 import com.ihsanguldur.coreledger.domain.valueobject.IdempotencyKey;
 import com.ihsanguldur.coreledger.domain.valueobject.Money;
 import com.ihsanguldur.coreledger.domain.valueobject.TransactionId;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -28,7 +29,8 @@ class TransferMoneyUseCaseTest {
 
     private final AccountRepository accountRepository = mock(AccountRepository.class);
     private final IdempotencyKeyRepository idempotencyKeyRepository = mock(IdempotencyKeyRepository.class);
-    private final TransferMoneyUseCase useCase = new TransferMoneyUseCase(accountRepository, idempotencyKeyRepository);
+    private final TransferMoneyUseCase useCase =
+            new TransferMoneyUseCase(accountRepository, idempotencyKeyRepository, new SimpleMeterRegistry());
 
     @Test
     void happyPathTransfersMoneyAndPersistsBothAccounts() {

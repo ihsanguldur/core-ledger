@@ -114,3 +114,13 @@ same as the Docker setup does).
 
 Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 Raw OpenAPI spec: `http://localhost:8080/v3/api-docs`
+
+## Observability
+
+`TransferMoneyUseCase` and `TransferToExternalBankUseCase` publish Micrometer metrics (attempt counters by outcome,
+duration timers), scraped from `/actuator/prometheus`. Brought up automatically by `docker compose up` alongside the
+app:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000` (login `admin` / `admin`) — a `core-ledger` dashboard is auto-provisioned with
+  transfer throughput, latency, and error-rate panels.
